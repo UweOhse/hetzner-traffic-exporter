@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultListenAddr = "127.0.0.1:9375"
+	defaultListenAddr = "127.0.0.1:9676"
 	defaultInterval   = 10
 	GPLv2             = "https://www.ohse.de/uwe/licenses/GPL-2"
 )
