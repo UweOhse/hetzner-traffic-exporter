@@ -43,11 +43,16 @@ This is just an example. I never tried it, and hope i never have to.
 ## Options
 
 * -1 
-  oneshot mode: outputs metrics once to stdout, and exists.
+  Oneshot mode: outputs metrics once to stdout, and exists.
 * -listen=1.2.3.4:56
-  address of the listener socket to use. defaults to something sensible.
-* -interval=123
-  set the update interval to 123 minutes. By default this exporter calls the hetzner API every 10 minutes, which should be enough in most cases.
+  Address of the listener socket to use. defaults to something sensible.
+* interval=23
+  Set the update interval to 23 minutes. By default this exporter calls the hetzner API every 10 minutes, which should be enough in most cases.
+  The exporter silently correct the range to 1..60 minutes.
+* -type=[day, month, year]
+  Select aggregation type.
+  __Note__: hetzner will update the day statistics hourly, the month statistics daily, and the year statistics monthly.
+  Unless you have a good reason to use monthly data, do __not__ use anything but `day`.
 * -version
   does what you should expect.
 * -license

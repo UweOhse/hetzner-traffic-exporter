@@ -110,7 +110,7 @@ var (
 	flagVersion    = flag.Bool("version", false, "show version information and exit.")
 	flagLicense    = flag.Bool("license", false, "show license information and exit.")
 	flagLogUpdates = flag.Bool("log-updates", false, "log updates.")
-	flagType       = flag.String("type", "daily", "daily, monthly or yearly.")
+	flagType       = flag.String("type", "day", "day, month or year.")
 	flagInterval   = flag.Int("interval", defaultInterval, "run updates against the API every ... minutes.")
 	flagListen     = flag.String("listen", defaultListenAddr,
 		"Address on which to expose metrics and web interface.")
