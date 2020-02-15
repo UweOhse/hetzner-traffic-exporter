@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
-	"flag"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +21,7 @@ import (
 
 const (
 	defaultListenAddr = "127.0.0.1:9375"
+	defaultInterval   = 10
 	GPLv2             = "https://www.ohse.de/uwe/licenses/GPL-2"
 )
 
@@ -105,12 +106,12 @@ var (
 		},
 		labels,
 	)
-	flagOneshot = flag.Bool("1", false, "collect and output the metrics once, and exit.")
-	flagVersion = flag.Bool("version", false, "show version information and exit.")
-	flagLicense = flag.Bool("license", false, "show license information and exit.")
+	flagOneshot    = flag.Bool("1", false, "collect and output the metrics once, and exit.")
+	flagVersion    = flag.Bool("version", false, "show version information and exit.")
+	flagLicense    = flag.Bool("license", false, "show license information and exit.")
 	flagLogUpdates = flag.Bool("log-updates", false, "log updates.")
-	flagInterval = flag.Int("interval", 10, "run updates against the API every ... minutes.");
-	flagListen  = flag.String("listen", defaultListenAddr,
+	flagInterval   = flag.Int("interval", defaultInterval, "run updates against the API every ... minutes.")
+	flagListen     = flag.String("listen", defaultListenAddr,
 		"Address on which to expose metrics and web interface.")
 )
 
@@ -142,7 +143,7 @@ func basicRequest(client *http.Client, method, apiurl string, data io.Reader) ([
 	}
 	return bodyText, nil
 }
-func handleRDNS(client *http.Client) (map[string]string,error) {
+func handleRDNS(client *http.Client) (map[string]string, error) {
 	out := make(map[string]string)
 	bodyText, err := basicRequest(client, "GET", "https://robot-ws.your-server.de/rdns", nil)
 	if err != nil {
@@ -166,18 +167,18 @@ func handleRDNS(client *http.Client) (map[string]string,error) {
 	}
 	return out, nil
 }
-func getTraffic(client *http.Client,par url.Values) (Traffic, error) {
+func getTraffic(client *http.Client, par url.Values) (Traffic, error) {
 	var trafficresponse Traffic
 	bodyText, err := basicRequest(client, "POST", "https://robot-ws.your-server.de/traffic",
 		strings.NewReader(par.Encode()))
-	if err!= nil {
+	if err != nil {
 		return trafficresponse, err
 	}
 	err = json.Unmarshal(bodyText, &trafficresponse)
 	return trafficresponse, err
 }
 
-func updateIPs() ([]TrafficInfo,error) {
+func updateIPs() ([]TrafficInfo, error) {
 	client := &http.Client{}
 
 	out := make([]TrafficInfo, 0)
@@ -229,7 +230,7 @@ func updateIPs() ([]TrafficInfo,error) {
 	}
 
 	/* part3: get the traffic */
-	trafficresponse, err := getTraffic(client,par)
+	trafficresponse, err := getTraffic(client, par)
 	if err != nil {
 		return out, err
 	}
@@ -261,16 +262,16 @@ func updateIPs() ([]TrafficInfo,error) {
 
 func updateMetrics(oneshot bool) {
 	for {
-		start:=time.Now();
+		start := time.Now()
 		if *flagLogUpdates {
 			log.Printf("update starts\n")
 		}
 		tiList, err := updateIPs()
-		if err!=nil {
-			log.Printf("update failed: %s\n",err)
-			continue;
+		if err != nil {
+			log.Printf("update failed: %s\n", err)
+			continue
 		}
-		end:=time.Now();
+		end := time.Now()
 		inputGB.Reset()
 		outputGB.Reset()
 		totalGB.Reset()
@@ -297,19 +298,19 @@ func updateMetrics(oneshot bool) {
 				"dns_name":      ti.dns_name,
 				"product":       ti.product,
 			}).Add(ti.total)
-			curTotal+=ti.total
+			curTotal += ti.total
 		}
 		if *flagLogUpdates {
-			d:=end.Sub(start);
-			log.Printf("update ended: total=%v, dur=%v\n",curTotal, d)
+			d := end.Sub(start)
+			log.Printf("update ended: total=%v, dur=%v\n", curTotal, d)
 		}
 
 		if oneshot {
 			return
 		}
-		i:=*flagInterval
-		if (i<1) {
-			i=1
+		i := *flagInterval
+		if i < 1 {
+			i = 1
 		}
 		time.Sleep(time.Duration(i) * 60 * time.Second)
 	}
@@ -360,7 +361,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	go updateMetrics(false);
+	go updateMetrics(false)
 
 	fmt.Printf("Listening on %q\n", *flagListen)
 	http.Handle("/metrics", promhttp.Handler())

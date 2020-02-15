@@ -1,6 +1,6 @@
 # hetzner-traffic-exporter
 
-This program talks to the [Hetzner API](https://robot.your-server.de/doc/webservice/de.html#storage-box) 
+This program talks to the [Hetzner API](https://robot.your-server.de/doc/webservice/en.html) 
 and outputs traffic statistics for all servers and ip addresses found.
 
 Note that Hetzner updates the traffic data hourly. If you use the exported numbers for dashboards, do not use, for example, `rate(sum(hetzner_traffic_output_gb[5m]))`, but something like 65m or 75m.
