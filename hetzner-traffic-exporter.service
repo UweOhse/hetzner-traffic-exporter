@@ -1,0 +1,14 @@
+[Unit]
+Description=hetzner traffic exporter for prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=HETZNER_USER=DOCHANCETHIS1
+Environment=HETZNER_PASS=DOCHANCETHIS2
+ExecStart=/usr/local/bin/hetzner-traffic-exporter
+
+[Install]
+WantedBy=multi-user.target
+
