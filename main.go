@@ -110,6 +110,7 @@ var (
 	flagVersion    = flag.Bool("version", false, "show version information and exit.")
 	flagLicense    = flag.Bool("license", false, "show license information and exit.")
 	flagLogUpdates = flag.Bool("log-updates", false, "log updates.")
+	flagType       = flag.String("type", "daily", "daily, monthly or yearly.")
 	flagInterval   = flag.Int("interval", defaultInterval, "run updates against the API every ... minutes.")
 	flagListen     = flag.String("listen", defaultListenAddr,
 		"Address on which to expose metrics and web interface.")
@@ -192,8 +193,24 @@ func updateIPs() ([]TrafficInfo, error) {
 	stich := time.Now()
 	// hetzner returns the traffic after the hour is finished. we avoid data
 	// loss by going back one hour.
-	stich = stich.Add(time.Hour * -1)
-	stichString := stich.Format("2006-01")
+	var from string
+	var to string
+	if *flagType=="day" {
+		stich = stich.Add(-1* time.Hour)
+		stichString := stich.Format("2006-01-02")
+		from = stichString+"T00"
+		to = stichString+"T24"
+        } else if *flagType=="month" {
+		stich = stich.Add(-1* time.Hour)
+		stichString := stich.Format("2006-01")
+		from = stichString+"-01"
+		to = stichString+"-31"
+        } else {
+		stich = stich.Add(-1* time.Hour)
+		stichString := stich.Format("2006")
+		from = stichString+"-01-01"
+		to = stichString+"-12-31"
+	}
 
 	var serverlistresponse ServerList
 	err = json.Unmarshal(bodyText, &serverlistresponse)
@@ -205,9 +222,9 @@ func updateIPs() ([]TrafficInfo, error) {
 
 	ipToServer := make(map[string]ServerEntry)
 	par := url.Values{}
-	par.Set("type", "month")
-	par.Set("from", stichString+"-01")
-	par.Set("to", stichString+"-31")
+	par.Set("type", *flagType)
+	par.Set("from", from)
+	par.Set("to", to)
 	for _, entry := range serverlistresponse {
 		for _, ip := range entry.Server.IP {
 			ipToServer[ip] = entry.Server
@@ -261,6 +278,12 @@ func updateIPs() ([]TrafficInfo, error) {
 }
 
 func updateMetrics(oneshot bool) {
+	interval := *flagInterval
+	if interval < 1 {
+		interval = 1
+	} else if interval>60 {
+		interval = 60
+	}
 	for {
 		start := time.Now()
 		if *flagLogUpdates {
@@ -269,6 +292,8 @@ func updateMetrics(oneshot bool) {
 		tiList, err := updateIPs()
 		if err != nil {
 			log.Printf("update failed: %s\n", err)
+			// do not run against API rate limits.
+			time.Sleep(time.Duration(interval) * 60 * time.Second)
 			continue
 		}
 		end := time.Now()
@@ -308,11 +333,7 @@ func updateMetrics(oneshot bool) {
 		if oneshot {
 			return
 		}
-		i := *flagInterval
-		if i < 1 {
-			i = 1
-		}
-		time.Sleep(time.Duration(i) * 60 * time.Second)
+		time.Sleep(time.Duration(interval) * 60 * time.Second)
 	}
 }
 
@@ -345,6 +366,9 @@ func main() {
 		fmt.Printf("%s: version %s\n\nThis software is published under the terms of the GPL version 2.\nA copy is at %s.\n",
 			os.Args[0], versionString, GPLv2)
 		os.Exit(0)
+	}
+	if *flagType!="day" && *flagType != "year" && *flagType!="month" {
+		log.Fatalf("bad --type option, %v not in (day,month,year)",*flagType);
 	}
 
 	hetznerUsername = os.Getenv("HETZNER_USER")
