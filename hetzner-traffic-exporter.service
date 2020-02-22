@@ -5,8 +5,8 @@ After=network-online.target
 
 [Service]
 Type=simple
-Environment=HETZNER_USER=DOCHANCETHIS1
-Environment=HETZNER_PASS=DOCHANCETHIS2
+Environment=HETZNER_USER=DOCHANGETHIS1
+Environment=HETZNER_PASS=DOCHANGETHIS2
 ExecStart=/usr/local/bin/hetzner-traffic-exporter
 
 [Install]
